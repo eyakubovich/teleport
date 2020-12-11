@@ -801,7 +801,7 @@ func (a *Server) PreAuthenticatedSignIn(user string, identity tlsca.Identity) (s
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	if err := a.UpsertWebSession(context.TODO(), user, sess); err != nil {
+	if err := a.UpsertWebSession(user, sess); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return sess.WithoutSecrets(), nil
@@ -882,10 +882,12 @@ func (a *Server) CheckU2FSignResponse(user string, response *u2f.SignResponse) e
 	return nil
 }
 
+// TODO(dmitri): enable reuse of the session ID
+//
 // ExtendWebSession creates a new web session for a user based on a valid previous sessionID.
 // Additional roles are appended to initial roles if there is an approved access request.
-func (a *Server) ExtendWebSession(ctx context.Context, req services.GetWebSessionRequest, accessRequestID string, identity tlsca.Identity) (services.WebSession, error) {
-	prevSession, err := a.GetWebSession(ctx, req)
+func (a *Server) ExtendWebSession(user, prevSessionID, accessRequestID string, identity tlsca.Identity) (services.WebSession, error) {
+	prevSession, err := a.GetWebSession(user, prevSessionID)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -904,7 +906,7 @@ func (a *Server) ExtendWebSession(ctx context.Context, req services.GetWebSessio
 	}
 
 	if accessRequestID != "" {
-		newRoles, requestExpiry, err := a.getRolesAndExpiryFromAccessRequest(req.User, accessRequestID)
+		newRoles, requestExpiry, err := a.getRolesAndExpiryFromAccessRequest(user, accessRequestID)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -918,7 +920,7 @@ func (a *Server) ExtendWebSession(ctx context.Context, req services.GetWebSessio
 		}
 	}
 
-	sess, err := a.NewWebSession(req.User, roles, traits)
+	sess, err := a.NewWebSession(user, roles, traits)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -926,7 +928,7 @@ func (a *Server) ExtendWebSession(ctx context.Context, req services.GetWebSessio
 	sess.SetExpiryTime(expiresAt)
 	bearerTokenTTL := utils.MinTTL(utils.ToTTL(a.clock, expiresAt), BearerTokenTTL)
 	sess.SetBearerTokenExpiryTime(a.clock.Now().UTC().Add(bearerTokenTTL))
-	if err := a.UpsertWebSession(ctx, req.User, sess); err != nil {
+	if err := a.UpsertWebSession(user, sess); err != nil {
 		return nil, trace.Wrap(err)
 	}
 
@@ -975,7 +977,7 @@ func (a *Server) getRolesAndExpiryFromAccessRequest(user, accessRequestID string
 
 // CreateWebSession creates a new web session for user without any
 // checks, is used by admins
-func (a *Server) CreateWebSession(ctx context.Context, user string) (services.WebSession, error) {
+func (a *Server) CreateWebSession(user string) (services.WebSession, error) {
 	u, err := a.GetUser(user, false)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -984,7 +986,7 @@ func (a *Server) CreateWebSession(ctx context.Context, user string) (services.We
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	if err := a.UpsertWebSession(ctx, user, sess); err != nil {
+	if err := a.UpsertWebSession(user, sess); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	sess, err = services.GetWebSessionMarshaler().GenerateWebSession(sess)
@@ -1543,16 +1545,16 @@ func (a *Server) NewWebSession(username string, roles []string, traits wrappers.
 	}), nil
 }
 
-func (a *Server) UpsertWebSession(ctx context.Context, user string, sess services.WebSession) error {
-	return a.Identity.UpsertWebSession(ctx, sess)
+func (a *Server) UpsertWebSession(user string, sess services.WebSession) error {
+	return a.Identity.UpsertWebSession(user, sess.GetName(), sess)
 }
 
-func (a *Server) GetWebSession(ctx context.Context, req services.GetWebSessionRequest) (services.WebSession, error) {
-	return a.Identity.GetWebSession(ctx, req)
+func (a *Server) GetWebSession(userName string, id string) (services.WebSession, error) {
+	return a.Identity.GetWebSession(userName, id)
 }
 
-func (a *Server) GetWebSessionInfo(ctx context.Context, req services.GetWebSessionRequest) (services.WebSession, error) {
-	sess, err := a.Identity.GetWebSession(ctx, req)
+func (a *Server) GetWebSessionInfo(userName string, id string) (services.WebSession, error) {
+	sess, err := a.Identity.GetWebSession(userName, id)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -1573,8 +1575,8 @@ func (a *Server) DeleteNamespace(namespace string) error {
 	return a.Presence.DeleteNamespace(namespace)
 }
 
-func (a *Server) DeleteWebSession(ctx context.Context, req services.DeleteWebSessionRequest) error {
-	return trace.Wrap(a.Identity.DeleteWebSession(ctx, req))
+func (a *Server) DeleteWebSession(user string, id string) error {
+	return trace.Wrap(a.Identity.DeleteWebSession(user, id))
 }
 
 // NewWatcher returns a new event watcher. In case of an auth server
