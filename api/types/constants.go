@@ -215,3 +215,6 @@ const (
 	// used only internally
 	VerbRotate = "rotate"
 )
+
+// WebSessionSubKinds lists subkinds of web session resources
+var WebSessionSubKinds = []string{KindAppSession, KindWebSession}
