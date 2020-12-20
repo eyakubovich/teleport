@@ -2,12 +2,10 @@
 # Values that must always be provided by the user.
 ##################################################
 
-# Join token for the cluster.
-authToken:
-# Address of the teleport proxy with port (usually :3080).
-proxyAddr:
-# Name for this kubernetes cluster to be used by teleport users.
-kubeClusterName:
+# clusterName is a unique cluster name,
+# FQDN that does not change, for example
+# teleport.example.com
+clusterName: 
 
 ##################################################
 # Values that you may need to change.
@@ -15,14 +13,24 @@ kubeClusterName:
 
 # Version of teleport image, if different from appVersion in Chart.yaml.
 teleportVersionOverride: ""
-# When set to true, the agent will skip the verification of proxy TLS
-# certificate.
-insecureSkipProxyTLSVerify: false
+
+# ACME is a protocol for getting certificates
+# acme enables acme protocol
+acme: false
+acmeEmail: ""
+acmeURI: ""
+
+# Set enterprise to true to use enterprise image
+enterprise: false
 
 # If true, create & use Pod Security Policy resources
 # https://kubernetes.io/docs/concepts/policy/pod-security-policy/
 podSecurityPolicy:
   enabled: true
+
+# Set customConfig to true to use a custom config. Create
+# a config resource, name it as release name and place it the chart namespace.
+customConfig: false
 
 # Labels is a map of key values pairs about this cluster
 labels: {}
@@ -31,16 +39,9 @@ labels: {}
 # Values that you shouldn't need to change.
 ##################################################
 
-# Container image for the agent. Since this runs without the auth_service, we
-# don't need the enterprise version.
+# Container image for the agent.
 image: quay.io/gravitational/teleport
+# Enterprise version of the image
+enterpriseImage: quay.io/gravitational/teleport-ent
 # Number of replicas for the agent deployment.
 replicaCount: 1
-# Name of the ClusterRole, used by the agent's service account.
-clusterRoleName: teleport-kube-agent
-# Name of the ClusterRoleBinding, used by the agent's service account.
-clusterRoleBindingName: teleport-kube-agent
-# Name of the service account used by the agent.
-serviceAccountName: teleport-kube-agent
-# Name of the Secret to store the teleport join token.
-secretName: teleport-kube-agent-join-token

@@ -46,10 +46,10 @@ nav:
     - Documentation:
         - Introduction: index.md
         - Installation: installation.md
-        - Quick Start Guide: quickstart.md
+        - Quick Start: quickstart.md
         - User Manual: user-manual.md
-        - Application Guide: application-access.md
-        - Kubernetes Guide: kubernetes-access.md
+        - Application Access: application-access.md
+        - Kubernetes Access: kubernetes-access.md
         - Admin Manual: admin-guide.md
         - Production Guide: production.md
         - FAQ: faq.md
