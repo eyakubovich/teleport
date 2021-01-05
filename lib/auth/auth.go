@@ -1953,7 +1953,8 @@ func (a *Server) upsertWebSession(ctx context.Context, user string, session serv
 	if err := a.WebSessions().Upsert(ctx, session); err != nil {
 		return trace.Wrap(err)
 	}
-	token := services.NewWebToken(session.GetBearerToken(), services.WebTokenSpecV1{
+	token := services.NewWebToken(services.WebTokenSpecV1{
+		User:    session.GetUser(),
 		Token:   session.GetBearerToken(),
 		Expires: session.GetBearerTokenExpiryTime(),
 	})
