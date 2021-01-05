@@ -898,10 +898,14 @@ func (a *Server) CheckU2FSignResponse(user string, response *u2f.SignResponse) e
 	return nil
 }
 
-// ExtendWebSession creates a new web session for a user based on a valid previous sessionID.
+// ExtendWebSession creates a new web session for a user based on a valid previous session.
 // Additional roles are appended to initial roles if there is an approved access request.
+// The new session expiration time will not exceed the expiration time of the old session.
 func (a *Server) ExtendWebSession(user, prevSessionID, accessRequestID string, identity tlsca.Identity) (services.WebSession, error) {
-	prevSession, err := a.GetWebSessionByUser(user, prevSessionID)
+	prevSession, err := a.GetWebSession(context.TODO(), services.GetWebSessionRequest{
+		User:      user,
+		SessionID: prevSessionID,
+	})
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -1516,7 +1520,7 @@ func (a *Server) GetTokens(opts ...services.MarshalOption) (tokens []services.Pr
 	return tokens, nil
 }
 
-// NewWebSession creates and returns a new web session for the specified user, given role and traits
+// NewWebSession creates and returns a new web session for the specified request
 func (a *Server) NewWebSession(req services.NewWebSessionRequest) (services.WebSession, error) {
 	user, err := a.GetUser(req.User, false)
 	if err != nil {
@@ -1562,11 +1566,6 @@ func (a *Server) NewWebSession(req services.NewWebSessionRequest) (services.WebS
 		BearerToken:        bearerToken,
 		BearerTokenExpires: a.clock.Now().UTC().Add(bearerTokenTTL),
 	}), nil
-}
-
-// GetWebSessionByUser queries the web session using the specified user name and session ID
-func (a *Server) GetWebSessionByUser(userName, sessionID string) (services.WebSession, error) {
-	return a.Identity.GetWebSession(userName, sessionID)
 }
 
 func (a *Server) GetWebSessionInfo(userName string, id string) (services.WebSession, error) {
