@@ -555,6 +555,7 @@ const (
 	KindSession                   = types.KindSession
 	KindSSHSession                = types.KindSSHSession
 	KindWebSession                = types.KindWebSession
+	KindWebToken                  = types.KindWebToken
 	KindAppSession                = types.KindAppSession
 	KindEvent                     = types.KindEvent
 	KindAuthServer                = types.KindAuthServer

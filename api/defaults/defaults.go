@@ -42,8 +42,11 @@ const (
 	// disconnected. The max count mirrors ClientAliveCountMax of sshd.
 	KeepAliveCountMax = 3
 
-	// MaxCertDuration limits maximum duration of validity of issued cert
+	// MaxCertDuration limits maximum duration of validity of issued certificate
 	MaxCertDuration = 30 * time.Hour
+
+	// CertDuration is a default certificate duration.
+	CertDuration = 12 * time.Hour
 
 	// ApplicationTokenAlgorithm is the default algorithm used to sign
 	// application access tokens.

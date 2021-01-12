@@ -34,6 +34,7 @@ import (
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
+	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
@@ -2454,9 +2455,9 @@ type ClientI interface {
 
 	// GetWebSession queries the existing web session described with req.
 	// Implements ReadAccessPoint.
-	GetWebSession(ctx context.Context, req services.GetWebSessionRequest) (services.WebSession, error)
+	GetWebSession(ctx context.Context, req types.GetWebSessionRequest) (types.WebSession, error)
 
 	// GetWebToken queries the existing web token described with req.
 	// Implements ReadAccessPoint.
-	GetWebToken(ctx context.Context, req services.GetWebTokenRequest) (services.WebToken, error)
+	GetWebToken(ctx context.Context, req types.GetWebTokenRequest) (types.WebToken, error)
 }
