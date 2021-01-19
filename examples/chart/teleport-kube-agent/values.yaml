@@ -1,17 +1,45 @@
-##################################################
+################################################################
 # Values that must always be provided by the user.
-##################################################
+################################################################
 
 # Join token for the cluster.
 authToken:
 # Address of the teleport proxy with port (usually :3080).
 proxyAddr:
+# Comma-separated list of roles to enable (any of: kube,db,app)
+roles:
+
+################################################################
+# Values that must be provided if Kubernetes access is enabled.
+################################################################
+
 # Name for this kubernetes cluster to be used by teleport users.
 kubeClusterName:
 
-##################################################
+################################################################
+# Values that must be provided if Application access is enabled.
+################################################################
+
+# Details of at least one app to be proxied. Example:
+# apps:
+#  - name: grafana
+#    uri: http://localhost:3000
+apps:
+
+################################################################
+# Values that must be provided if Database access is enabled.
+################################################################
+
+# Details of at least one database to be proxied. Example:
+# databases:
+#  - name: aurora
+#    uri: "postgres-aurora-instance-1.xxx.us-east-1.rds.amazonaws.com:5432"
+#    protocol: "postgres"
+databases:
+
+################################################################
 # Values that you may need to change.
-##################################################
+################################################################
 
 # Version of teleport image, if different from appVersion in Chart.yaml.
 teleportVersionOverride: ""
@@ -27,9 +55,9 @@ podSecurityPolicy:
 # Labels is a map of key values pairs about this cluster
 labels: {}
 
-##################################################
+################################################################
 # Values that you shouldn't need to change.
-##################################################
+################################################################
 
 # Container image for the agent. Since this runs without the auth_service, we
 # don't need the enterprise version.
@@ -37,10 +65,10 @@ image: quay.io/gravitational/teleport
 # Number of replicas for the agent deployment.
 replicaCount: 1
 # Name of the ClusterRole, used by the agent's service account.
-clusterRoleName: teleport-kube-agent
+clusterRoleName: teleport-agent
 # Name of the ClusterRoleBinding, used by the agent's service account.
-clusterRoleBindingName: teleport-kube-agent
+clusterRoleBindingName: teleport-agent
 # Name of the service account used by the agent.
-serviceAccountName: teleport-kube-agent
+serviceAccountName: teleport-agent
 # Name of the Secret to store the teleport join token.
-secretName: teleport-kube-agent-join-token
+secretName: teleport-agent-join-token
