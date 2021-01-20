@@ -1,4 +1,9 @@
-# Teleport Kubernetes Agent
+# WARNING
+
+This chart is deprecated - please use the [teleport-agent](../teleport-agent) chart
+with `--set roles=kube` instead.
+
+## Teleport Kubernetes Agent
 
 This chart is a minimal Teleport agent used to register a Kubernetes cluster
 with an existing Teleport cluster.
