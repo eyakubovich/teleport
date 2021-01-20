@@ -8,10 +8,11 @@
     <pre>helm repo add teleport https://charts.releases.teleport.dev</pre>
     <h3>Install a chart</h3>
     <pre><b><a href="https://github.com/gravitational/teleport/tree/master/examples/chart/teleport">teleport:</a></b> helm install ${RELEASE_NAME?} teleport/teleport</pre>
-    <pre><b><a href="https://github.com/gravitational/teleport/tree/master/examples/chart/teleport-kube-agent">teleport-kube-agent:</a></b>
-    helm install ${RELEASE_NAME?} teleport/teleport-kube-agent \
+    <pre><b><a href="https://github.com/gravitational/teleport/tree/master/examples/chart/teleport-agent">teleport-agent:</a></b>
+    helm install ${RELEASE_NAME?} teleport/teleport-agent \
     --create-namespace \
     --namespace ${NAMESPACE?} \
+    --set roles=kube \
     --set proxyAddr=${PROXY_ENDPOINT?} \
     --set authToken=${JOIN_TOKEN?} \
     --set kubeClusterName=${KUBERNETES_CLUSTER_NAME?}</pre>

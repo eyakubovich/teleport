@@ -1315,6 +1315,8 @@ steps:
       - mkdir -p /go/chart
       - cd /go/chart
       - helm package /go/src/github.com/gravitational/teleport/examples/chart/teleport
+      - helm package /go/src/github.com/gravitational/teleport/examples/chart/teleport-agent
+      # this chart is deprecated, but we'll keep it around for a while to allow people to switch
       - helm package /go/src/github.com/gravitational/teleport/examples/chart/teleport-kube-agent
       # copy index.html to root of the S3 bucket
       - cp /go/src/github.com/gravitational/teleport/examples/chart/index.html /go/chart
@@ -4040,6 +4042,6 @@ volumes:
 
 ---
 kind: signature
-hmac: a31d345fd4f889f01931451fc8226f87894abd875fdeafd0f4d46085a3c8dc88
+hmac: 88e84836b52682ca9ecb9f59aca031c14a71e18e0cf499bea4afa9b26b49500e
 
 ...
