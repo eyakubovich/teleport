@@ -45,7 +45,7 @@ Teleport Auth And Proxy can be ran anywhere (inside or outside of k8s). The Tele
 proxy must have `kube_listen_addr` set.
 
 - Options for connecting k8s clusters:
-    - `kubernetes_service` in a pod [Using our Helm Chart](https://github.com/gravitational/teleport/blob/master/examples/chart/teleport-kube-agent/README.md)
+    - `kubernetes_service` in a pod [Using our Helm Chart](https://github.com/gravitational/teleport/blob/master/examples/chart/teleport-agent/README.md)
     - `kubernetes_service` elsewhere, with kubeconfig. Use [get-kubeconfig.sh](https://github.com/gravitational/teleport/blob/master/examples/k8s-auth/) for building kubeconfigs
 
 There are two options for setting up Teleport to access Kubernetes:
@@ -80,9 +80,10 @@ To get quickly setup, we provide a Helm chart that'll connect to the above root 
 $ helm repo add teleport https://charts.releases.teleport.dev
 
 # Installing the Helm Chart
-helm install teleport-kube-agent teleport/teleport-kube-agent \
+helm install teleport-agent teleport/teleport-agent \
   --namespace teleport \
   --create-namespace \
+  --set roles=kube \
   --set proxyAddr=proxy.example.com:3080 \
   --set authToken=$JOIN_TOKEN \
   --set kubeClusterName=$KUBERNETES_CLUSTER_NAME
