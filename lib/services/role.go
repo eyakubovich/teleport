@@ -537,6 +537,39 @@ func CompareRuleScore(r *Rule, o *Rule) bool {
 	return scoreRule(r) > scoreRule(o)
 }
 
+// ruleMatchesWhere returns true if Where rule matches
+// Empty Where block always matches
+func ruleMatchesWhere(r *Rule, parser predicate.Parser) (bool, error) {
+	if r.Where == "" {
+		return true, nil
+	}
+	ifn, err := parser.Parse(r.Where)
+	if err != nil {
+		return false, trace.Wrap(err)
+	}
+	fn, ok := ifn.(predicate.BoolPredicate)
+	if !ok {
+		return false, trace.BadParameter("unsupported type: %T", ifn)
+	}
+	return fn(), nil
+}
+
+// processActions processes actions specified for this rule
+func processActions(r *Rule, parser predicate.Parser) error {
+	for _, action := range r.Actions {
+		ifn, err := parser.Parse(action)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		fn, ok := ifn.(predicate.BoolPredicate)
+		if !ok {
+			return trace.BadParameter("unsupported type: %T", ifn)
+		}
+		fn()
+	}
+	return nil
+}
+
 // RuleSet maps resource to a set of rules defined for it
 type RuleSet map[string][]Rule
 
@@ -558,12 +591,12 @@ func (set RuleSet) Match(whereParser predicate.Parser, actionsParser predicate.P
 	// the most specific rule should win
 	rules := set[resource]
 	for _, rule := range rules {
-		match, err := rule.MatchesWhere(whereParser)
+		match, err := ruleMatchesWhere(&rule, whereParser)
 		if err != nil {
 			return false, trace.Wrap(err)
 		}
 		if match && (rule.HasVerb(Wildcard) || rule.HasVerb(verb)) {
-			if err := rule.ProcessActions(actionsParser); err != nil {
+			if err := processActions(&rule, actionsParser); err != nil {
 				return true, trace.Wrap(err)
 			}
 			return true, nil
@@ -572,12 +605,12 @@ func (set RuleSet) Match(whereParser predicate.Parser, actionsParser predicate.P
 
 	// check for wildcard resource matcher
 	for _, rule := range set[Wildcard] {
-		match, err := rule.MatchesWhere(whereParser)
+		match, err := ruleMatchesWhere(&rule, whereParser)
 		if err != nil {
 			return false, trace.Wrap(err)
 		}
 		if match && (rule.HasVerb(Wildcard) || rule.HasVerb(verb)) {
-			if err := rule.ProcessActions(actionsParser); err != nil {
+			if err := processActions(&rule, actionsParser); err != nil {
 				return true, trace.Wrap(err)
 			}
 			return true, nil
