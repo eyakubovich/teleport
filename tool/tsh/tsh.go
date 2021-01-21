@@ -222,12 +222,19 @@ func main() {
 }
 
 const (
-	clusterEnvVar          = "TELEPORT_SITE"
-	clusterHelp            = "Specify the cluster to connect"
-	bindAddrEnvVar         = "TELEPORT_LOGIN_BIND_ADDR"
-	authEnvVar             = "TELEPORT_AUTH"
-	browserHelp            = "Set to 'none' to suppress browser opening on login"
+	authEnvVar     = "TELEPORT_AUTH"
+	clusterEnvVar  = "TELEPORT_CLUSTER"
+	loginEnvVar    = "TELEPORT_LOGIN"
+	bindAddrEnvVar = "TELEPORT_LOGIN_BIND_ADDR"
+	proxyEnvVar    = "TELEPORT_PROXY"
+	// legacyClusterEnvVar used the old "site" terminology for cluster name that
+	// is no longer used anymore. Retain it for backward compatability.
+	legacyClusterEnvVar    = "TELEPORT_SITE"
+	userEnvVar             = "TELEPORT_USER"
 	useLocalSSHAgentEnvVar = "TELEPORT_USE_LOCAL_SSH_AGENT"
+
+	clusterHelp = "Specify the cluster to connect"
+	browserHelp = "Set to 'none' to suppress browser opening on login"
 )
 
 // Run executes TSH client. same as main() but easier to test
@@ -237,11 +244,11 @@ func Run(args []string) {
 
 	// configure CLI argument parser:
 	app := utils.InitCLIParser("tsh", "TSH: Teleport Authentication Gateway Client").Interspersed(false)
-	app.Flag("login", "Remote host login").Short('l').Envar("TELEPORT_LOGIN").StringVar(&cf.NodeLogin)
+	app.Flag("login", "Remote host login").Short('l').Envar(loginEnvVar).StringVar(&cf.NodeLogin)
 	localUser, _ := client.Username()
-	app.Flag("proxy", "SSH proxy address").Envar("TELEPORT_PROXY").StringVar(&cf.Proxy)
+	app.Flag("proxy", "SSH proxy address").Envar(proxyEnvVar).StringVar(&cf.Proxy)
 	app.Flag("nocache", "do not cache cluster discovery locally").Hidden().BoolVar(&cf.NoCache)
-	app.Flag("user", fmt.Sprintf("SSH proxy user [%s]", localUser)).Envar("TELEPORT_USER").StringVar(&cf.Username)
+	app.Flag("user", fmt.Sprintf("SSH proxy user [%s]", localUser)).Envar(userEnvVar).StringVar(&cf.Username)
 	app.Flag("option", "").Short('o').Hidden().AllowDuplicate().PreAction(func(ctx *kingpin.ParseContext) error {
 		return trace.BadParameter("invalid flag, perhaps you want to use this flag as tsh ssh -o?")
 	}).String()
@@ -257,7 +264,7 @@ func Run(args []string) {
 	app.Flag("gops-addr", "Specify gops addr to listen on").Hidden().StringVar(&cf.GopsAddr)
 	app.Flag("skip-version-check", "Skip version checking between server and client.").BoolVar(&cf.SkipVersionCheck)
 	app.Flag("debug", "Verbose logging to stdout").Short('d').BoolVar(&cf.Debug)
-	app.Flag("use-local-ssh-agent", "Load generated SSH certificates into the local ssh-agent (specified via $SSH_AUTH_SOCK). You can also set TELEPORT_USE_LOCAL_SSH_AGENT environment variable. Default is true.").
+	app.Flag("use-local-ssh-agent", fmt.Sprintf("Load generated SSH certificates into the local ssh-agent (specified via $SSH_AUTH_SOCK). You can also set %v environment variable. Default is true.", useLocalSSHAgentEnvVar)).
 		Envar(useLocalSSHAgentEnvVar).
 		Default("true").
 		BoolVar(&cf.UseLocalSSHAgent)
@@ -371,6 +378,11 @@ func Run(args []string) {
 	// about the certificate.
 	status := app.Command("status", "Display the list of proxy servers and retrieved certificates")
 
+	// The environment command prints out environment variables for the configured
+	// proxy and cluster. Can be used to create sessions "sticky" to a terminal
+	// even if the user runs "tsh login" again in another window.
+	environment := app.Command("env", "Print environment variables for the configured proxy and cluster")
+
 	// Kubernetes subcommands.
 	kube := newKubeCommand(app)
 
@@ -419,6 +431,15 @@ func Run(args []string) {
 		utils.FatalError(err)
 	}
 
+	// Always pickup the legacy cluster environment variable TELEPORT_SITE if the
+	// user sets it. However, prefer TELEPORT_CLUSTER if set.
+	if clusterName := os.Getenv(legacyClusterEnvVar); clusterName != "" {
+		cf.SiteName = clusterName
+	}
+	if clusterName := os.Getenv(clusterEnvVar); clusterName != "" {
+		cf.SiteName = clusterName
+	}
+
 	switch command {
 	case ver.FullCommand():
 		utils.PrintVersion()
@@ -461,6 +482,8 @@ func Run(args []string) {
 		onDatabaseLogout(&cf)
 	case dbEnv.FullCommand():
 		onDatabaseEnv(&cf)
+	case environment.FullCommand():
+		onEnvironment(&cf)
 	default:
 		// This should only happen when there's a missing switch case above.
 		err = trace.BadParameter("command %q not configured", command)
@@ -1853,4 +1876,14 @@ func onApps(cf *CLIConf) {
 	})
 
 	showApps(servers, cf.Verbose)
+}
+
+// onEnvironment handles "tsh env" command.
+func onEnvironment(cf *CLIConf) {
+	profile, err := client.StatusCurrent("", cf.Proxy)
+	if err != nil {
+		utils.FatalError(err)
+	}
+	fmt.Printf("export %v=%v\n", proxyEnvVar, profile.ProxyURL.Host)
+	fmt.Printf("export %v=%v\n", clusterEnvVar, profile.Cluster)
 }
