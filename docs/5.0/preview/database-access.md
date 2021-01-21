@@ -103,7 +103,10 @@ See a more detailed description of these steps in the [reference](#aws-rdsaurora
 ### Step 2/3. Setup Teleport
 
 Download the latest version of Teleport for your platform from [downloads page](https://goteleport.com/teleport/download).
-Database Access is available starting from `6.0.0-alpha.1` release.
+Database Access is available starting from `6.0.0-alpha.1` pre-release.
+
+!!! warning
+    Note, pre-releases are not suitable for production usage!
 
 Start Teleport using the following command and point it to your Aurora database
 instance. Make sure to update the database endpoint and region appropriately.
@@ -346,8 +349,10 @@ for more information.
 First, head over to the Teleport [downloads page](https://goteleport.com/teleport/download/)
 and download the latest version of Teleport.
 
-!!! note
-    Teleport Database Access is available starting from `6.0.0-alpha.1` release.
+Teleport Database Access is available starting from `6.0.0-alpha.1` pre-release.
+
+!!! warning
+    Note, pre-releases are not suitable for production usage!
 
 Follow the installation [instructions](../installation.md).
 
