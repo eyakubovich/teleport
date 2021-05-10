@@ -30,6 +30,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/gravitational/teleport"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/teleport/lib/defaults"
@@ -120,6 +121,9 @@ type Server interface {
 
 	// GetBPF returns the BPF service used for enhanced session recording.
 	GetBPF() bpf.BPF
+
+	// GetRestrictedSessionManager returns the manager for restricting user activity
+	GetRestrictedSessionManager() restricted.Manager
 
 	// Context returns server shutdown context
 	Context() context.Context
