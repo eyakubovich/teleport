@@ -35,6 +35,7 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	apiutils "github.com/gravitational/teleport/api/utils"
 	"github.com/gravitational/teleport/lib/auth"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/backend/lite"
 	"github.com/gravitational/teleport/lib/backend/memory"
@@ -531,6 +532,9 @@ type SSHConfig struct {
 	// BPF holds BPF configuration for Teleport.
 	BPF *bpf.Config
 
+	// RestrictedSession holds kernel objects restrictions for Teleport.
+	RestrictedSession *restricted.Config
+
 	// ProxyReverseTunnelFallbackAddr optionall specifies the address of the proxy if reverse tunnel
 	// discovered proxy fails.
 	// This configuration is not exposed directly but can be set from environment via
@@ -877,6 +881,7 @@ func ApplyDefaults(cfg *Config) {
 	defaults.ConfigureLimiter(&cfg.SSH.Limiter)
 	cfg.SSH.PAM = &pam.Config{Enabled: false}
 	cfg.SSH.BPF = &bpf.Config{Enabled: false}
+	cfg.SSH.RestrictedSession = &restricted.Config{Enabled: false}
 	cfg.SSH.AllowTCPForwarding = true
 
 	// Kubernetes service defaults.

@@ -41,6 +41,7 @@ import (
 	"github.com/gravitational/teleport/api/constants"
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/teleport/lib/limiter"
@@ -160,6 +161,7 @@ func newCustomFixture(t *testing.T, mutateCfg func(*auth.TestServerConfig), sshO
 			},
 		),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(clock),
 	}
 
@@ -814,6 +816,7 @@ func TestProxyReverseTunnel(t *testing.T) {
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
 		SetClock(f.clock),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 	)
 	require.NoError(t, err)
 	require.NoError(t, proxy.Start())
@@ -891,6 +894,7 @@ func TestProxyReverseTunnel(t *testing.T) {
 		SetNamespace(apidefaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetEmitter(nodeClient),
 		SetClock(f.clock),
 	)
@@ -992,6 +996,7 @@ func TestProxyRoundRobin(t *testing.T) {
 		SetNamespace(apidefaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(f.clock),
 	)
 	require.NoError(t, err)
@@ -1109,6 +1114,7 @@ func TestProxyDirectAccess(t *testing.T) {
 		SetNamespace(apidefaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(f.clock),
 	)
 	require.NoError(t, err)
@@ -1238,6 +1244,7 @@ func TestLimiter(t *testing.T) {
 		SetNamespace(apidefaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(f.clock),
 	)
 	require.NoError(t, err)

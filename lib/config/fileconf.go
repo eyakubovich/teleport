@@ -36,6 +36,7 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	apiutils "github.com/gravitational/teleport/api/utils"
 	"github.com/gravitational/teleport/api/utils/tlsutils"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/teleport/lib/defaults"
@@ -615,6 +616,9 @@ type SSH struct {
 	// BPF is used to configure BPF-based auditing for this node.
 	BPF *BPF `yaml:"enhanced_recording,omitempty"`
 
+	// RestrictedSession is used to restrict access to kernel objects
+	RestrictedSession *RestrictedSession `yaml:"restricted_session,omitempty"`
+
 	// MaybeAllowTCPForwarding enables or disables TCP port forwarding. We're
 	// using a pointer-to-bool here because the system default is to allow TCP
 	// forwarding, we need to distinguish between an unset value and a false
@@ -700,6 +704,76 @@ func (b *BPF) Parse() *bpf.Config {
 		NetworkBufferSize: b.NetworkBufferSize,
 		CgroupPath:        b.CgroupPath,
 	}
+}
+
+type NetworkRestrictions struct {
+	// Deny is a list of IP4 or IP6 addresses (single IP or in CIDR notation)
+	// to deny.
+	Deny []string `yaml:"deny"`
+
+	// AllowList is a list of IP4 or IP6 addresses (single IP or in CIDR notation)
+	// to allow, overriding deny list
+	Allow []string `yaml:"allow"`
+}
+
+func (r *NetworkRestrictions) parseCIDRs(cidrs []string) ([]net.IPNet, error) {
+	result := []net.IPNet{}
+
+	for _, cidr := range cidrs {
+		ipnet, err := restricted.ParseIPSpec(cidr)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, *ipnet)
+	}
+
+	return result, nil
+}
+
+func (r *NetworkRestrictions) Parse() (*restricted.NetworkConfig, error) {
+	deny, err := r.parseCIDRs(r.Deny)
+	if err != nil {
+		return nil, err
+	}
+
+	allow, err := r.parseCIDRs(r.Allow)
+	if err != nil {
+		return nil, err
+	}
+
+	return &restricted.NetworkConfig{
+		Deny: deny,
+		Allow: allow,
+	}, nil
+}
+
+// RestrictedSession is a configuration for limiting access to kernel objects
+type RestrictedSession struct {
+	// Enabled enables or disables enforcemant for this node.
+	Enabled string `yaml:"enabled"`
+
+	// Network contains deny/allow lists of IPs
+	Network NetworkRestrictions `yaml:"network"`
+
+	// EventsBufferSize is the size in bytes of the channel to report events
+	// from the kernel to us.
+	EventsBufferSize *int `yaml:"events_buffer_size,omitempty"`
+}
+
+// Parse will parse the enhanced session recording configuration.
+func (r *RestrictedSession) Parse() (*restricted.Config, error) {
+	enabled, _ := utils.ParseBool(r.Enabled)
+
+	nw, err := r.Network.Parse()
+	if err != nil {
+		return nil, err
+	}
+
+	return &restricted.Config{
+		Enabled:          enabled,
+		Network:          nw,
+		EventsBufferSize: r.EventsBufferSize,
+	}, nil
 }
 
 // Databases represents the database proxy service configuration.
