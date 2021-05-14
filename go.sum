@@ -97,6 +97,8 @@ github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210402182705-095336c20e03 h1:0l
 github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210402182705-095336c20e03/go.mod h1:PgXimFYUSx0PfQFRIyl770Jowy6O3r7iJOr39dt1bss=
 github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210407113620-71d4c839fb68 h1:4XUZi7TNj8dlZJQO2eH57OT2W0mWooGwFPzgiGGQ7Sw=
 github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210407113620-71d4c839fb68/go.mod h1:PgXimFYUSx0PfQFRIyl770Jowy6O3r7iJOr39dt1bss=
+github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210429162404-38b402df69f2 h1:QoM02ljcqdabnmdD/B9lK8Hg8Rjc4hrbetA5Bt4kfto=
+github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210429162404-38b402df69f2/go.mod h1:PgXimFYUSx0PfQFRIyl770Jowy6O3r7iJOr39dt1bss=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=

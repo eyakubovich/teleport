@@ -38,6 +38,7 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	apisshutils "github.com/gravitational/teleport/api/utils/sshutils"
 	"github.com/gravitational/teleport/lib/auth"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	authority "github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/backend/lite"
 	"github.com/gravitational/teleport/lib/bpf"
@@ -509,6 +510,10 @@ func (f *fakeServer) UseTunnel() bool {
 
 func (f *fakeServer) GetBPF() bpf.BPF {
 	return &bpf.NOP{}
+}
+
+func (f *fakeServer) GetRestrictedSessionManager() restricted.Manager{
+	return &restricted.NOP{}
 }
 
 // fakeLog is used in tests to obtain the last event emit to the Audit Log.

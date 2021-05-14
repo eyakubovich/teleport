@@ -48,6 +48,7 @@ import (
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/webclient"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/backend"
@@ -1612,6 +1613,7 @@ func (process *TeleportProcess) initSSH() error {
 	var agentPool *reversetunnel.AgentPool
 	var conn *Connector
 	var ebpf bpf.BPF
+	var rm restricted.Manager
 	var s *regular.Server
 	var asyncEmitter *events.AsyncEmitter
 
@@ -1657,6 +1659,12 @@ func (process *TeleportProcess) initSSH() error {
 				"the cluster level, then restart Teleport.")
 		}
 
+		// Restricted session requires BPF (enhanced recording)
+		if cfg.SSH.RestrictedSession.Enabled && !cfg.SSH.BPF.Enabled {
+			return trace.BadParameter("restricted_session requires enhanced_recording " +
+				"to be enabled")
+		}
+
 		// If BPF is enabled in file configuration, but the operating system does
 		// not support enhanced session recording (like macOS), exit right away.
 		if cfg.SSH.BPF.Enabled && !bpf.SystemHasBPF() {
@@ -1669,6 +1677,14 @@ func (process *TeleportProcess) initSSH() error {
 		// load, the node will not start. If BPF is not enabled, this will simply
 		// return a NOP struct that can be used to discard BPF data.
 		ebpf, err = bpf.New(cfg.SSH.BPF)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+
+		// Start access control programs. This is blocking and if the BPF programs fail to
+		// load, the node will not start. If access control is not enabled, this will simply
+		// return a NOP struct.
+		rm, err = restricted.New(cfg.SSH.RestrictedSession)
 		if err != nil {
 			return trace.Wrap(err)
 		}
@@ -1745,6 +1761,7 @@ func (process *TeleportProcess) initSSH() error {
 			regular.SetUseTunnel(conn.UseTunnel()),
 			regular.SetFIPS(cfg.FIPS),
 			regular.SetBPF(ebpf),
+			regular.SetRestrictedSessionManager(rm),
 			regular.SetOnHeartbeat(func(err error) {
 				if err != nil {
 					process.BroadcastEvent(Event{Name: TeleportDegradedEvent, Payload: teleport.ComponentNode})

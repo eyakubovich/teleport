@@ -13,7 +13,7 @@ require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c // indirect
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
 	github.com/aquasecurity/tracee v0.5.1-0.20210407113620-71d4c839fb68 // indirect
-	github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210407113620-71d4c839fb68
+	github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210429162404-38b402df69f2
 	github.com/armon/go-radix v1.0.0
 	github.com/aws/aws-sdk-go v1.37.17
 	github.com/beevik/etree v1.1.0

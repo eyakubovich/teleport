@@ -57,7 +57,7 @@ github.com/alecthomas/template/parse
 github.com/alecthomas/units
 # github.com/aquasecurity/tracee v0.5.1-0.20210407113620-71d4c839fb68
 ## explicit
-# github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210407113620-71d4c839fb68
+# github.com/aquasecurity/tracee/libbpfgo v0.0.0-20210429162404-38b402df69f2
 ## explicit
 github.com/aquasecurity/tracee/libbpfgo
 github.com/aquasecurity/tracee/libbpfgo/helpers
@@ -278,8 +278,11 @@ github.com/gravitational/roundtrip
 ## explicit
 github.com/gravitational/teleport/api/client
 github.com/gravitational/teleport/api/client/proto
+github.com/gravitational/teleport/api/client/webclient
 github.com/gravitational/teleport/api/constants
 github.com/gravitational/teleport/api/defaults
+github.com/gravitational/teleport/api/identityfile
+github.com/gravitational/teleport/api/profile
 github.com/gravitational/teleport/api/types
 github.com/gravitational/teleport/api/types/events
 github.com/gravitational/teleport/api/types/wrappers

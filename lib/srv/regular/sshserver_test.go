@@ -38,6 +38,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/gravitational/teleport"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/teleport/lib/defaults"
@@ -186,6 +187,7 @@ func (s *SrvSuite) SetUpTest(c *C) {
 			},
 		),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(s.clock),
 	)
 	c.Assert(err, IsNil)
@@ -738,6 +740,7 @@ func (s *SrvSuite) TestProxyReverseTunnel(c *C) {
 		SetNamespace(defaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(s.clock),
 	)
 	c.Assert(err, IsNil)
@@ -815,6 +818,7 @@ func (s *SrvSuite) TestProxyReverseTunnel(c *C) {
 		SetNamespace(defaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetEmitter(s.nodeClient),
 		SetClock(s.clock),
 	)
@@ -906,6 +910,7 @@ func (s *SrvSuite) TestProxyRoundRobin(c *C) {
 		SetNamespace(defaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(s.clock),
 	)
 	c.Assert(err, IsNil)
@@ -1012,6 +1017,7 @@ func (s *SrvSuite) TestProxyDirectAccess(c *C) {
 		SetNamespace(defaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(s.clock),
 	)
 	c.Assert(err, IsNil)
@@ -1123,6 +1129,7 @@ func (s *SrvSuite) TestLimiter(c *C) {
 		SetNamespace(defaults.Namespace),
 		SetPAMConfig(&pam.Config{Enabled: false}),
 		SetBPF(&bpf.NOP{}),
+		SetRestrictedSessionManager(&restricted.NOP{}),
 		SetClock(s.clock),
 	)
 	c.Assert(err, IsNil)
