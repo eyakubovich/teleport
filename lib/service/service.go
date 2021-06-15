@@ -75,6 +75,7 @@ import (
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/multiplexer"
 	"github.com/gravitational/teleport/lib/plugin"
+	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/session"
@@ -1522,6 +1523,7 @@ func (process *TeleportProcess) newAccessCache(cfg accessCacheConfig) (*cache.Ca
 		Access:          cfg.services,
 		DynamicAccess:   cfg.services,
 		Presence:        cfg.services,
+		Restrictions:    cfg.services,
 		AppSession:      cfg.services,
 		WebSession:      cfg.services.WebSessions(),
 		WebToken:        cfg.services.WebTokens(),
@@ -1697,7 +1699,7 @@ func (process *TeleportProcess) initSSH() error {
 		// Start access control programs. This is blocking and if the BPF programs fail to
 		// load, the node will not start. If access control is not enabled, this will simply
 		// return a NOP struct.
-		rm, err = restricted.New(cfg.SSH.RestrictedSession)
+		rm, err = restricted.New(cfg.SSH.RestrictedSession, conn.Client)
 		if err != nil {
 			return trace.Wrap(err)
 		}

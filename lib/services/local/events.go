@@ -119,6 +119,8 @@ func (e *EventsService) NewWatcher(ctx context.Context, watch types.Watch) (type
 			parser = newKubeServiceParser()
 		case types.KindDatabaseServer:
 			parser = newDatabaseServerParser()
+		case types.KindNetworkRestrictions:
+			parser = newNetworkRestrictionsParser()
 		default:
 			return nil, trace.BadParameter("watcher on object kind %q is not supported", kind.Kind)
 		}
@@ -1024,6 +1026,42 @@ func (p *remoteClusterParser) parse(event backend.Event) (types.Resource, error)
 		return resourceHeader(event, types.KindRemoteCluster, types.V3, 0)
 	case types.OpPut:
 		resource, err := services.UnmarshalRemoteCluster(event.Item.Value,
+			services.WithResourceID(event.Item.ID),
+			services.WithExpires(event.Item.Expires),
+		)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		return resource, nil
+	default:
+		return nil, trace.BadParameter("event %v is not supported", event.Type)
+	}
+}
+
+func newNetworkRestrictionsParser() *networkRestrictionsParser {
+	return &networkRestrictionsParser{
+		matchPrefix: backend.Key(restrictionsPrefix, network),
+	}
+}
+
+type networkRestrictionsParser struct {
+	matchPrefix []byte
+}
+
+func (p *networkRestrictionsParser) prefixes() [][]byte {
+	return [][]byte{p.matchPrefix}
+}
+
+func (p *networkRestrictionsParser) match(key []byte) bool {
+	return bytes.HasPrefix(key, p.matchPrefix)
+}
+
+func (p *networkRestrictionsParser) parse(event backend.Event) (types.Resource, error) {
+	switch event.Type {
+	case types.OpDelete:
+		return resourceHeader(event, types.KindNetworkRestrictions, types.V1, 0)
+	case types.OpPut:
+		resource, err := services.UnmarshalNetworkRestrictions(event.Item.Value,
 			services.WithResourceID(event.Item.ID),
 			services.WithExpires(event.Item.Expires),
 		)

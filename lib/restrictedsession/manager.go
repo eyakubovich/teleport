@@ -20,11 +20,13 @@ import (
 	"github.com/gravitational/teleport/lib/bpf"
 )
 
-// Manager starts and stop enforcing restrictions for a
-// given session.
+// Manager starts and stop enforcing restrictions for a given session.
 type Manager interface {
+	// OpenSession starts enforcing restrictions for a cgroup with cgroupID
 	OpenSession(ctx *bpf.SessionContext, cgroupID uint64)
+	// CloseSession stops enforcing restrictions for a cgroup with cgroupID
 	CloseSession(ctx *bpf.SessionContext, cgroupID uint64)
+	// Close stops the manager, cleaning up any resources
 	Close()
 }
 
@@ -35,6 +37,10 @@ func (_ NOP) OpenSession(ctx *bpf.SessionContext, cgroupID uint64) {
 }
 
 func (_ NOP) CloseSession(ctx *bpf.SessionContext, cgroupID uint64) {
+}
+
+func (_ NOP) UpdateNetworkRestrictions(r *NetworkRestrictions) error {
+	return  nil
 }
 
 func (_ NOP) Close() {

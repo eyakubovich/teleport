@@ -66,10 +66,10 @@ static inline bool is_ip4_blocked(const struct sockaddr_in *addr) {
 		.addr = addr->sin_addr
 	};
 
-	if (!bpf_map_lookup_elem(&ip4_denylist, &key))
-		return false;
+	if (!bpf_map_lookup_elem(&ip4_allowlist, &key))
+		return true;
 
-	return (bool)!bpf_map_lookup_elem(&ip4_allowlist, &key);
+	return (bool)bpf_map_lookup_elem(&ip4_denylist, &key);
 }
 
 // checks if the given address (IP) is blocked
@@ -78,10 +78,10 @@ static inline bool is_ip6_blocked(const struct sockaddr_in6 *addr) {
 	key.prefixlen = 128;
 	key.addr = BPF_CORE_READ(addr, sin6_addr);
 
-	if (!bpf_map_lookup_elem(&ip6_denylist, &key))
-		return false;
+	if (bpf_map_lookup_elem(&ip6_denylist, &key))
+		return true;
 
-	return (bool)!bpf_map_lookup_elem(&ip6_allowlist, &key);
+	return (bool)bpf_map_lookup_elem(&ip6_allowlist, &key);
 }
 
 // A channel back to user-space to notify it of blocked actions

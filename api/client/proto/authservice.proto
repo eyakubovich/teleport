@@ -87,6 +87,8 @@ message Event {
         // ClusterAuditConfig is a resource for cluster audit configuration.
         types.ClusterAuditConfigV2 ClusterAuditConfig = 23
             [ (gogoproto.jsontag) = "cluster_audit_config,omitempty" ];
+        types.NetworkRestrictions NetworkRestrictions = 24
+            [ (gogoproto.jsontag) = "network_restrictions,omitempty" ];
     }
 }
 
@@ -1132,4 +1134,11 @@ service AuthService {
     rpc GetEvents(GetEventsRequest) returns (Events);
     // In-session request for audit events.
     rpc GetSessionEvents(GetSessionEventsRequest) returns (Events);
+
+    // GetNetworkRestrictions retrieves all the network restrictions (allow/deny lists).
+    rpc GetNetworkRestrictions(google.protobuf.Empty) returns (types.NetworkRestrictions);
+    // SetNetworkRestrictions updates the network restrictions.
+    rpc SetNetworkRestrictions(types.NetworkRestrictions) returns (google.protobuf.Empty);
+    // DeleteNetworkRestrictions delete the network restrictions.
+    rpc DeleteNetworkRestrictions(google.protobuf.Empty) returns (google.protobuf.Empty);
 }

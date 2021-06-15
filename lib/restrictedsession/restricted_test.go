@@ -198,13 +198,16 @@ func (s *Suite) SetUpSuite(c *check.C) {
 		}
 	}
 
+	restrictions := &NetworkRestrictions{
+		Deny: deny,
+		Allow: allow,
+	}
+
 	s.restrictedMgr, err = New(&Config{
 		Enabled: true,
-		Network: &NetworkConfig{
-			Deny:  deny,
-			Allow: allow,
-		},
 	})
+
+	s.restrictedMgr.UpdateNetworkRestrictions(restrictions)
 
 	s.srcAddrs = map[int]string{
 		4: "0.0.0.0",

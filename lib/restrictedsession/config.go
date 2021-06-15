@@ -20,24 +20,15 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/gravitational/trace"
+	api "github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/defaults"
 )
 
-// NetworkConfig holds configuration for the network portion of the RestrictedSession service.
-type NetworkConfig struct {
-	// Deny holds a list of IPs (with masks) to deny (block)
-	Deny []net.IPNet
-
-	// Allow holds a list of IPs (with masks) to allow, overriding deny list
-	Allow []net.IPNet
-}
-
 // Config holds configuration for the RestrictedSession service.
 type Config struct {
-	// Enabled is if this service will try and install BPF programs on this system.
+	// Enabled if this service will try and install BPF programs on this system.
 	Enabled bool
-
-	Network *NetworkConfig
 
 	// EventsBufferSize is the size (in pages) of the perf buffer for events.
 	EventsBufferSize *int
@@ -82,5 +73,47 @@ func ParseIPSpec(cidr string) (*net.IPNet, error) {
 	return &net.IPNet{
 		IP:   ip,
 		Mask: net.CIDRMask(bits, bits),
+	}, nil
+}
+
+// NetworkRestrictions specifies which addresses should be blocked.
+type NetworkRestrictions struct {
+	// Enabled controls if restrictions are enforced.
+	Enabled bool
+
+	// Allow holds a list of IPs (with masks) to allow, overriding deny list
+	Allow []net.IPNet
+
+	// Deny holds a list of IPs (with masks) to deny (block)
+	Deny []net.IPNet
+}
+
+func protoToIPNets(protoAddrs []api.AddressCondition) ([]net.IPNet, error) {
+	nets := []net.IPNet{}
+	for _, a := range protoAddrs {
+		n, err := ParseIPSpec(a.CIDR)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		nets = append(nets, *n)
+	}
+	return nets, nil
+}
+
+func protoToNetworkRestrictions(proto *api.NetworkRestrictions) (*NetworkRestrictions, error) {
+	deny, err := protoToIPNets(proto.Spec.Deny)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	allow, err := protoToIPNets(proto.Spec.Allow)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return &NetworkRestrictions{
+		Enabled: true,
+		Deny: deny,
+		Allow: allow,
 	}, nil
 }

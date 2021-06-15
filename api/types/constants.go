@@ -218,6 +218,9 @@ const (
 	// KindBilling represents access to cloud billing features
 	KindBilling = "billing"
 
+	// KindNetworkRestrictions are restrictions for SSH sessions
+	KindNetworkRestrictions = "network_restrictions"
+
 	// V4 is the fourth version of resources.
 	V4 = "v4"
 

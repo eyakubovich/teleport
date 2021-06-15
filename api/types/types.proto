@@ -2182,3 +2182,37 @@ message TrustedClusterSpecV2 {
     repeated RoleMapping RoleMap = 6
         [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "role_map,omitempty" ];
 }
+
+// AddressCondition represents a set of addresses. Presently the addresses are specfied
+// exclusively in terms of IPv4/IPv6 ranges.
+message AddressCondition {
+    // CIDR is IPv4 or IPv6 address. Valid value are either CIDR ranges (e.g. "10.0.1.0/24",
+    // "fe::/8") or a single IP address (e.g "10.1.2.3")
+    string CIDR = 1 [ (gogoproto.jsontag) = "cidr" ];
+}
+
+message NetworkRestrictionsSpec {
+    // Allow lists the addresses that should be allowed.
+    repeated AddressCondition Allow = 5
+        [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "allow" ];
+    // Deny lists the addresses that should be denied even if they're allowed by Allow condition.
+    repeated AddressCondition Deny = 6
+        [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "deny" ];
+}
+
+// NetworkRestrictions specifies a list of addresses to restrict (block). The deny
+// list is checked first and the allow lists overrides it. Thus an empty allow
+// list does not mean that no addresses will be allowed, that will only be the
+// case if the deny list covers the whole address range.
+message NetworkRestrictions {
+    // Kind is the network restrictions resource kind.
+    string Kind = 1 [ (gogoproto.jsontag) = "kind" ];
+    // SubKind is an optional resource subkind.
+    string SubKind = 2 [ (gogoproto.jsontag) = "sub_kind,omitempty" ];
+    // Version is the resource version.
+    string Version = 3 [ (gogoproto.jsontag) = "version" ];
+    // Metadata is the network restrictions metadata.
+    Metadata Metadata = 4 [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "metadata" ];
+    // Spec contains the network restrictions data
+    NetworkRestrictionsSpec Spec = 5 [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "spec" ];
+}

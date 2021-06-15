@@ -530,6 +530,42 @@ func (c *recConfigCollection) writeText(w io.Writer) error {
 	return trace.Wrap(err)
 }
 
+type netRestrictionsCollection struct {
+	netRestricts types.NetworkRestrictions
+}
+
+type writer struct {
+	w io.Writer
+	err error
+}
+
+func (w *writer) write(s string) {
+	if w.err == nil {
+		_, w.err = w.w.Write([]byte(s))
+	}
+}
+
+func (c *netRestrictionsCollection) resources() (r []types.Resource) {
+	return []types.Resource{&c.netRestricts}
+}
+
+func (c *netRestrictionsCollection) writeList(as []types.AddressCondition, w *writer) {
+	for _, a := range as {
+		w.write(a.CIDR)
+		w.write("\n")
+	}
+}
+
+func (c *netRestrictionsCollection) writeText(w io.Writer) error {
+	out := &writer{w: w}
+	out.write("ALLOW\n")
+	c.writeList(c.netRestricts.Spec.Allow, out)
+
+	out.write("\nDENY\n")
+	c.writeList(c.netRestricts.Spec.Deny, out)
+	return trace.Wrap(out.err)
+}
+
 type dbCollection struct {
 	servers []types.DatabaseServer
 }

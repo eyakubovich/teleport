@@ -24,13 +24,14 @@ import (
 	"encoding/binary"
 	"sync"
 
-	"github.com/aquasecurity/tracee/libbpfgo"
 	"github.com/gravitational/teleport"
+	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/bpf"
 	"github.com/gravitational/trace"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/sirupsen/logrus"
+	"github.com/aquasecurity/libbpfgo"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -61,7 +62,7 @@ type sessionMgr struct {
 	// mod is the handle to the BPF loaded module
 	mod *libbpfgo.Module
 
-	// watch paps the cgroup to the session
+	// watch keeps the set of cgroups being enforced
 	watch bpf.SessionWatch
 
 	// cgroups for which enforcement is active
@@ -73,16 +74,20 @@ type sessionMgr struct {
 	// eventLoop pumps the audit messages from the kernel
 	// to the audit subsystem
 	eventLoop *auditEventLoop
+
+	// updateLoop listens for restriction updates and applies them
+	// to the audit subsystem
+	updateLoop *restrictionsUpdateLoop
 }
 
 // New creates a RestrictedSession service.
-func New(config *Config) (Manager, error) {
+func New(config *Config, ac *auth.Client) (Manager, error) {
 	err := config.CheckAndSetDefaults()
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	// If BPF-based auditing is not enabled, don't configure anything return
+	// If BPF-based auditing is not enabled, don't configure anything
 	// right away.
 	if !config.Enabled {
 		log.Debugf("Restricted session is not enabled, skipping.")
@@ -101,7 +106,7 @@ func New(config *Config) (Manager, error) {
 		return nil, trace.Wrap(err)
 	}
 
-	nw, err := newNetwork(config.Network, mod)
+	nw, err := newNetwork(mod)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -123,6 +128,11 @@ func New(config *Config) (Manager, error) {
 		return nil, trace.Wrap(err)
 	}
 
+	m.updateLoop, err = newRestrictionsUpdateLoop(nw, ac)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	log.Info("Started restricted session management")
 
 	return m, nil
@@ -132,10 +142,11 @@ func New(config *Config) (Manager, error) {
 // shutdown, from the man page for BPF: "Generally, eBPF programs are loaded
 // by the user process and automatically unloaded when the process exits."
 func (m *sessionMgr) Close() {
+	// Close the updater loop
+	m.updateLoop.close()
 
-	// Signal to the loop pulling events off the perf buffer to shutdown.
+	// Signal the loop pulling events off the perf buffer to shutdown.
 	m.eventLoop.close()
-
 }
 
 // OpenSession inserts the cgroupID into the BPF hash map to enable
@@ -162,6 +173,58 @@ func (m *sessionMgr) CloseSession(ctx *bpf.SessionContext, cgroupID uint64) {
 	m.watch.Remove(cgroupID)
 
 	log.Debugf("CGroup %v unregistered", cgroupID)
+}
+
+type restrictionsUpdateLoop struct {
+	nw *network
+
+    watcher *RestrictionsWatcher
+
+	// Signals the loop goroutine to exit
+	stop chan struct{}
+
+	// Notifies that loop goroutine is done
+	wg sync.WaitGroup
+}
+
+func newRestrictionsUpdateLoop(nw *network, ac auth.ClientI) (*restrictionsUpdateLoop, error) {
+	w, err := NewRestrictionsWatcher(RestrictionsWatcherConfig{
+		Client: ac,
+		RestrictionsC: make(chan *NetworkRestrictions, 10),
+	})
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	l := &restrictionsUpdateLoop{
+		nw: nw,
+		watcher: w,
+		stop: make(chan struct{}),
+	}
+
+	l.wg.Add(1)
+	go l.loop()
+
+	return l, nil
+}
+
+func (l *restrictionsUpdateLoop) close() {
+	close(l.stop)
+	l.wg.Wait()
+}
+
+func (l *restrictionsUpdateLoop) loop() {
+	defer l.wg.Done()
+
+	for {
+		select {
+			case r := <-l.watcher.RestrictionsC:
+				l.nw.update(r)
+
+			case <-l.stop:
+				return
+		}
+	}
 }
 
 type auditEventLoop struct {
@@ -208,6 +271,8 @@ func newAuditEventLoop(mod *libbpfgo.Module, w *bpf.SessionWatch) (*auditEventLo
 }
 
 func (l *auditEventLoop) loop() {
+	defer l.wg.Done()
+
 	for {
 		select {
 		// Program execution.
@@ -239,8 +304,6 @@ func (l *auditEventLoop) loop() {
 			return
 		}
 	}
-
-	l.wg.Done()
 }
 
 func (l *auditEventLoop) close() {
